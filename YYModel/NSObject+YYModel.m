@@ -1565,9 +1565,20 @@ static id JSONObjectToModelRecursive(NSObject *model) {
     if ([model isKindOfClass:[NSString class]]) return model;
     if ([model isKindOfClass:[NSNumber class]]) return model;
     if ([model isKindOfClass:[NSDictionary class]]) {
-        //判断有没有selfClassName
-        if (![(NSDictionary*)model objectForKey:@"selfClassName"]) {
-            return model;
+        NSMutableDictionary *newDict = [NSMutableDictionary dictionary];
+        NSDictionary *dict = (NSDictionary*)model;
+        for (NSString *key in [dict allKeys]) {
+            id obj = [dict objectForKey:key];
+            if ([obj isKindOfClass:[NSString class]] || [obj isKindOfClass:[NSNumber class]]) {
+                [newDict setObject:obj forKey:key];
+            }else {
+                id jsonObj = JSONObjectToModelRecursive(obj);
+                if (jsonObj && jsonObj != (id)kCFNull){ [newDict setObject:jsonObj forKey:key];
+                }
+            }
+        }
+        if (![dict objectForKey:@"selfClassName"]) {
+            return newDict;
         }
         id ncls = [[NSClassFromString([(NSDictionary*)model objectForKey:@"selfClassName"]) alloc] init];
         [((NSDictionary *)model) enumerateKeysAndObjectsUsingBlock:^(NSString *key, id obj, BOOL *stop) {
@@ -1583,6 +1594,25 @@ static id JSONObjectToModelRecursive(NSObject *model) {
             }
         }];
         return ncls;
+        
+        //        //判断有没有selfClassName
+        //        if (![(NSDictionary*)model objectForKey:@"selfClassName"]) {
+        //            return model;
+        //        }
+        //        id ncls = [[NSClassFromString([(NSDictionary*)model objectForKey:@"selfClassName"]) alloc] init];
+        //        [((NSDictionary *)model) enumerateKeysAndObjectsUsingBlock:^(NSString *key, id obj, BOOL *stop) {
+        //            NSString *stringKey = [key isKindOfClass:[NSString class]] ? key : key.description;
+        //            if (!stringKey) return;
+        //            //判断是否还有容器
+        //            if ([obj isKindOfClass:[NSArray class]] || [obj isKindOfClass:[NSDictionary class]] || [obj isKindOfClass:[NSSet class]]) {
+        //                //如果有容器，递归
+        //                id childObj = JSONObjectToModelRecursive(obj);
+        //                [ncls setValue:childObj forKey:stringKey];
+        //            }else {
+        //                [ncls setValue:obj forKey:stringKey];
+        //            }
+        //        }];
+        //        return ncls;
     }
     if ([model isKindOfClass:[NSSet class]]) {
         NSArray *array = ((NSSet *)model).allObjects;
