@@ -134,7 +134,7 @@ static force_inline NSNumber *YYNSNumberCreateFromID(__unsafe_unretained id valu
 /// Parse string to date.
 static force_inline NSDate *YYNSDateFromString(__unsafe_unretained NSString *string) {
     typedef NSDate* (^YYNSDateParseBlock)(NSString *string);
-    #define kParserNum 34
+#define kParserNum 34
     static YYNSDateParseBlock blocks[kParserNum + 1] = {0};
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
@@ -165,12 +165,12 @@ static force_inline NSDate *YYNSDateFromString(__unsafe_unretained NSString *str
             formatter2.locale = [[NSLocale alloc] initWithLocaleIdentifier:@"en_US_POSIX"];
             formatter2.timeZone = [NSTimeZone timeZoneForSecondsFromGMT:0];
             formatter2.dateFormat = @"yyyy-MM-dd HH:mm:ss";
-
+            
             NSDateFormatter *formatter3 = [[NSDateFormatter alloc] init];
             formatter3.locale = [[NSLocale alloc] initWithLocaleIdentifier:@"en_US_POSIX"];
             formatter3.timeZone = [NSTimeZone timeZoneForSecondsFromGMT:0];
             formatter3.dateFormat = @"yyyy-MM-dd'T'HH:mm:ss.SSS";
-
+            
             NSDateFormatter *formatter4 = [[NSDateFormatter alloc] init];
             formatter4.locale = [[NSLocale alloc] initWithLocaleIdentifier:@"en_US_POSIX"];
             formatter4.timeZone = [NSTimeZone timeZoneForSecondsFromGMT:0];
@@ -183,7 +183,7 @@ static force_inline NSDate *YYNSDateFromString(__unsafe_unretained NSString *str
                     return [formatter2 dateFromString:string];
                 }
             };
-
+            
             blocks[23] = ^(NSString *string) {
                 if ([string characterAtIndex:10] == 'T') {
                     return [formatter3 dateFromString:string];
@@ -205,11 +205,11 @@ static force_inline NSDate *YYNSDateFromString(__unsafe_unretained NSString *str
             NSDateFormatter *formatter = [NSDateFormatter new];
             formatter.locale = [[NSLocale alloc] initWithLocaleIdentifier:@"en_US_POSIX"];
             formatter.dateFormat = @"yyyy-MM-dd'T'HH:mm:ssZ";
-
+            
             NSDateFormatter *formatter2 = [NSDateFormatter new];
             formatter2.locale = [[NSLocale alloc] initWithLocaleIdentifier:@"en_US_POSIX"];
             formatter2.dateFormat = @"yyyy-MM-dd'T'HH:mm:ss.SSSZ";
-
+            
             blocks[20] = ^(NSString *string) { return [formatter dateFromString:string]; };
             blocks[24] = ^(NSString *string) { return [formatter dateFromString:string]?: [formatter2 dateFromString:string]; };
             blocks[25] = ^(NSString *string) { return [formatter dateFromString:string]; };
@@ -225,11 +225,11 @@ static force_inline NSDate *YYNSDateFromString(__unsafe_unretained NSString *str
             NSDateFormatter *formatter = [NSDateFormatter new];
             formatter.locale = [[NSLocale alloc] initWithLocaleIdentifier:@"en_US_POSIX"];
             formatter.dateFormat = @"EEE MMM dd HH:mm:ss Z yyyy";
-
+            
             NSDateFormatter *formatter2 = [NSDateFormatter new];
             formatter2.locale = [[NSLocale alloc] initWithLocaleIdentifier:@"en_US_POSIX"];
             formatter2.dateFormat = @"EEE MMM dd HH:mm:ss.SSS Z yyyy";
-
+            
             blocks[30] = ^(NSString *string) { return [formatter dateFromString:string]; };
             blocks[34] = ^(NSString *string) { return [formatter2 dateFromString:string]; };
         }
@@ -239,7 +239,7 @@ static force_inline NSDate *YYNSDateFromString(__unsafe_unretained NSString *str
     YYNSDateParseBlock parser = blocks[string.length];
     if (!parser) return nil;
     return parser(string);
-    #undef kParserNum
+#undef kParserNum
 }
 
 
@@ -1153,7 +1153,7 @@ static void ModelSetWithPropertyMetaArrayFunction(const void *_propertyMeta, voi
 }
 
 /**
- Returns a valid JSON object (NSArray/NSDictionary/NSString/NSNumber/NSNull), 
+ Returns a valid JSON object (NSArray/NSDictionary/NSString/NSNumber/NSNull),
  or nil if an error occurs.
  
  @param model Model, can be nil.
@@ -1170,6 +1170,7 @@ static id ModelToJSONObjectRecursive(NSObject *model) {
             NSString *stringKey = [key isKindOfClass:[NSString class]] ? key : key.description;
             if (!stringKey) return;
             id jsonObj = ModelToJSONObjectRecursive(obj);
+            [jsonObj setSelfClassName:NSStringFromClass([jsonObj class])];
             if (!jsonObj) jsonObj = (id)kCFNull;
             newDic[stringKey] = jsonObj;
         }];
@@ -1184,6 +1185,7 @@ static id ModelToJSONObjectRecursive(NSObject *model) {
                 [newArray addObject:obj];
             } else {
                 id jsonObj = ModelToJSONObjectRecursive(obj);
+                [jsonObj setSelfClassName:NSStringFromClass([jsonObj class])];
                 if (jsonObj && jsonObj != (id)kCFNull) [newArray addObject:jsonObj];
             }
         }
@@ -1197,6 +1199,7 @@ static id ModelToJSONObjectRecursive(NSObject *model) {
                 [newArray addObject:obj];
             } else {
                 id jsonObj = ModelToJSONObjectRecursive(obj);
+                [jsonObj setSelfClassName:NSStringFromClass([jsonObj class])];
                 if (jsonObj && jsonObj != (id)kCFNull) [newArray addObject:jsonObj];
             }
         }
@@ -1211,6 +1214,7 @@ static id ModelToJSONObjectRecursive(NSObject *model) {
     _YYModelMeta *modelMeta = [_YYModelMeta metaWithClass:[model class]];
     if (!modelMeta || modelMeta->_keyMappedCount == 0) return nil;
     NSMutableDictionary *result = [[NSMutableDictionary alloc] initWithCapacity:64];
+    [result setObject:NSStringFromClass([model class])  forKey:@"selfClassName"];
     __unsafe_unretained NSMutableDictionary *dic = result; // avoid retain and release in block
     [modelMeta->_mapper enumerateKeysAndObjectsUsingBlock:^(NSString *propertyMappedKey, _YYModelPropertyMeta *propertyMeta, BOOL *stop) {
         if (!propertyMeta->_getter) return;
@@ -1271,6 +1275,7 @@ static id ModelToJSONObjectRecursive(NSObject *model) {
                 dic[propertyMeta->_mappedToKey] = value;
             }
         }
+        
     }];
     
     if (modelMeta->_hasCustomTransformToDictionary) {
@@ -1308,7 +1313,7 @@ static NSString *ModelDescription(NSObject *model) {
         case YYEncodingTypeNSString: case YYEncodingTypeNSMutableString: {
             return [NSString stringWithFormat:@"\"%@\"",model];
         }
-        
+            
         case YYEncodingTypeNSValue:
         case YYEncodingTypeNSData: case YYEncodingTypeNSMutableData: {
             NSString *tmp = model.description;
@@ -1367,7 +1372,7 @@ static NSString *ModelDescription(NSObject *model) {
             }
             return desc;
         }
-        
+            
         default: {
             NSMutableString *desc = [NSMutableString new];
             [desc appendFormat:@"<%@: %p>", model.class, model];
@@ -1450,6 +1455,16 @@ static NSString *ModelDescription(NSObject *model) {
     return dic;
 }
 
+- (void)setSelfClassName:(NSString *)selfClassName {
+    objc_setAssociatedObject(self, "selfClassName", selfClassName, OBJC_ASSOCIATION_COPY_NONATOMIC);
+    
+}
+
+- (NSString*)selfClassName{
+    return objc_getAssociatedObject(self, "selfClassName");
+}
+
+
 + (instancetype)yy_modelWithJSON:(id)json {
     NSDictionary *dic = [self _yy_dictionaryWithJSON:json];
     return [self yy_modelWithDictionary:dic];
@@ -1479,7 +1494,7 @@ static NSString *ModelDescription(NSObject *model) {
     if (!dic || dic == (id)kCFNull) return NO;
     if (![dic isKindOfClass:[NSDictionary class]]) return NO;
     
-
+    
     _YYModelMeta *modelMeta = [_YYModelMeta metaWithClass:object_getClass(self)];
     if (modelMeta->_keyMappedCount == 0) return NO;
     
@@ -1534,6 +1549,74 @@ static NSString *ModelDescription(NSObject *model) {
     if ([jsonObject isKindOfClass:[NSDictionary class]]) return jsonObject;
     return nil;
 }
+
+
+//把转为json的model转为对象
++ (id)yy_modelWithObj:(id)obj {
+    id jsonObject = JSONObjectToModelRecursive(obj);
+    if ([jsonObject isKindOfClass:[NSArray class]]) return jsonObject;
+    if ([jsonObject isKindOfClass:[NSDictionary class]]) return jsonObject;
+    return nil;
+}
+
+//json转object
+static id JSONObjectToModelRecursive(NSObject *model) {
+    if (!model || model == (id)kCFNull) return model;
+    if ([model isKindOfClass:[NSString class]]) return model;
+    if ([model isKindOfClass:[NSNumber class]]) return model;
+    if ([model isKindOfClass:[NSDictionary class]]) {
+        //判断有没有selfClassName
+        if (![(NSDictionary*)model objectForKey:@"selfClassName"]) {
+            return model;
+        }
+        id ncls = [[NSClassFromString([(NSDictionary*)model objectForKey:@"selfClassName"]) alloc] init];
+        [((NSDictionary *)model) enumerateKeysAndObjectsUsingBlock:^(NSString *key, id obj, BOOL *stop) {
+            NSString *stringKey = [key isKindOfClass:[NSString class]] ? key : key.description;
+            if (!stringKey) return;
+            //判断是否还有容器
+            if ([obj isKindOfClass:[NSArray class]] || [obj isKindOfClass:[NSDictionary class]] || [obj isKindOfClass:[NSSet class]]) {
+                //如果有容器，递归
+                id childObj = JSONObjectToModelRecursive(obj);
+                [ncls setValue:childObj forKey:stringKey];
+            }else {
+                [ncls setValue:obj forKey:stringKey];
+            }
+        }];
+        return ncls;
+    }
+    if ([model isKindOfClass:[NSSet class]]) {
+        NSArray *array = ((NSSet *)model).allObjects;
+        NSMutableArray *newArray = [NSMutableArray new];
+        for (id obj in array) {
+            if ([obj isKindOfClass:[NSString class]] || [obj isKindOfClass:[NSNumber class]]) {
+                [newArray addObject:obj];
+            } else {
+                id jsonObj = JSONObjectToModelRecursive(obj);
+                if (jsonObj && jsonObj != (id)kCFNull){ [newArray addObject:jsonObj];
+                }
+            }
+        }
+        return newArray;
+    }
+    if ([model isKindOfClass:[NSArray class]]) {
+        NSArray *array = (NSArray*)model;
+        NSMutableArray *newArray = [NSMutableArray new];
+        for (id obj in array) {
+            if ([obj isKindOfClass:[NSString class]] || [obj isKindOfClass:[NSNumber class]]) {
+                [newArray addObject:obj];
+            } else {
+                id jsonObj = JSONObjectToModelRecursive(obj);
+                if (jsonObj && jsonObj != (id)kCFNull){ [newArray addObject:jsonObj];
+                }
+            }
+        }
+        return newArray;
+    }
+    return nil;
+}
+
+
+
 
 - (NSData *)yy_modelToJSONData {
     id jsonObject = [self yy_modelToJSONObject];
@@ -1685,7 +1768,7 @@ static NSString *ModelDescription(NSObject *model) {
 
 - (id)yy_modelInitWithCoder:(NSCoder *)aDecoder {
     if (!aDecoder) return self;
-    if (self == (id)kCFNull) return self;    
+    if (self == (id)kCFNull) return self;
     _YYModelMeta *modelMeta = [_YYModelMeta metaWithClass:self.class];
     if (modelMeta->_nsType) return self;
     
